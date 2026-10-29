@@ -129,7 +129,7 @@ Linux 宿主机的 bind mount 目录必须允许容器 UID/GID 1000 读写。不
 
 ## Web 工作台
 
-完成启动后，打开 http://127.0.0.1:8787。也可直接构建并启动，不配置 OpenCode：
+完成启动后，打开 http://127.0.0.1:8787  。也可直接构建并启动，不配置 OpenCode：
 
 ```bash
 docker compose up -d --build --wait
