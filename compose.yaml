@@ -11,8 +11,8 @@ services:
     restart: unless-stopped
     user: "1000:1000"
     working_dir: /work
-    command: ["sleep", "infinity"]
-    network_mode: none
+    ports:
+      - "127.0.0.1:${REA_WEB_PORT:-8787}:8787"
     shm_size: 1gb
     mem_limit: ${REA_MEMORY_LIMIT:-8g}
     cpus: "${REA_CPUS:-4.0}"
@@ -25,6 +25,11 @@ services:
       REA_GHIDRA_STARTUP_TIMEOUT_MS: "900000"
       REA_MCP_INPUT_SCHEMA_PROFILE: compact
     volumes:
+      - type: bind
+        source: ./uploads
+        target: /uploads
+        bind:
+          create_host_path: false
       - type: bind
         source: ./targets
         target: /targets

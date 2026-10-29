@@ -52,19 +52,25 @@ COPY docker/apktool /usr/local/bin/apktool
 COPY docker/entrypoint.sh /usr/local/bin/rea-entrypoint
 COPY docker/healthcheck.sh /usr/local/bin/rea-healthcheck
 COPY scripts/smoke-mcp.py /opt/toolbox/smoke-mcp.py
+COPY scripts/smoke-web.py /opt/toolbox/smoke-web.py
+COPY scripts/mcp_client.py /opt/toolbox/mcp_client.py
 COPY --from=fixtures /fixtures /opt/toolbox/fixtures
 COPY versions.lock.json /opt/toolbox/versions.lock.json
-RUN chmod 0755 /usr/local/bin/apktool /usr/local/bin/rea-entrypoint /usr/local/bin/rea-healthcheck \
+RUN chmod 0644 /opt/jadx/*.jar /opt/apktool/*.jar \
+    && chmod 0755 /usr/local/bin/apktool /usr/local/bin/rea-entrypoint /usr/local/bin/rea-healthcheck \
     && if getent passwd 1000 >/dev/null; then userdel -r "$(getent passwd 1000 | cut -d: -f1)"; fi \
     && if getent group 1000 >/dev/null; then groupdel "$(getent group 1000 | cut -d: -f1)"; fi \
     && groupadd --gid 1000 rea && useradd --uid 1000 --gid 1000 --create-home --shell /bin/bash rea \
-    && mkdir -p /targets /work /results /home/rea/.cache \
-    && chown -R rea:rea /targets /work /results /home/rea \
+    && mkdir -p /targets /uploads /work /results /home/rea/.cache \
+    && chown -R rea:rea /targets /uploads /work /results /home/rea \
     && node --version && rea --version && apktool --version \
     && dpkg-query -W > /opt/toolbox/os-packages.txt \
     && npm ls --omit=dev --omit=optional --json > /opt/toolbox/npm-packages.json
+COPY web /opt/toolbox/web
+COPY config/opencode.example.json /opt/toolbox/web/opencode.example.json
 USER rea
 WORKDIR /work
+EXPOSE 8787
 HEALTHCHECK --interval=60s --timeout=15s --start-period=30s --retries=3 CMD ["/usr/local/bin/rea-healthcheck"]
 ENTRYPOINT ["/usr/local/bin/rea-entrypoint"]
-CMD ["sleep", "infinity"]
+CMD ["python3", "/opt/toolbox/web/server.py", "--host", "0.0.0.0", "--port", "8787"]

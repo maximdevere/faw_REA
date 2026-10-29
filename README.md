@@ -1,12 +1,13 @@
 # faw_REA
 
-给宿主机 OpenCode 使用的 REA 纯静态分析工具箱。工具在 Linux Docker 容器中运行，OpenCode 和模型账号留在宿主机。
+带本地 Web 工作台的 REA 纯静态分析工具箱，也可由宿主机 OpenCode 接入。上传样本、查看进度、筛选候选线索与下载证据都可在浏览器完成；分析工具在 Linux Docker 容器中运行，OpenCode 和模型账号留在宿主机。
 
-本项目覆盖本地 APK、EXE、DLL、ELF、SO 以及 REA 内置支持的静态文件分析；不运行目标，不配置动态调试、Frida、设备连接或浏览器。
+本项目覆盖本地 APK、EXE、DLL、ELF、SO 以及 REA 内置支持的静态文件分析；不运行目标，不配置动态调试、Frida、设备连接或目标浏览器自动化。
 
 ## 架构
 
 ```text
+本地浏览器 → http://127.0.0.1:8787 → Web 工作台 → REA stdio MCP
 宿主机 OpenCode
   ├─ REA 匹配版本的工作流 skill
   └─ docker exec -i -w /work rea-toolbox rea mcp
@@ -19,12 +20,13 @@
               ├─ Apktool
               └─ file / binutils / rg / jq / 解压工具
                     │
+                    ├─ /uploads ↔ uploads/，Web 上传样本
                     ├─ /targets ← targets/，只读输入
                     ├─ /work    ↔ workspace/，工作副本
                     └─ /results ↔ results/，导出证据
 ```
 
-默认不开放网络端口。运行容器使用 network_mode: none，保留容器内部 loopback，供分析引擎使用。镜像构建、拉取和下载测试样本时需要联网。
+默认只向宿主机回环地址开放 Web 端口 8787，MCP 仍走 docker exec stdio，不新增对外 MCP 端口。Compose 使用 Docker bridge 网络，容器能够出站联网，不能将其描述为断网沙箱。Web 只调用预定义的静态分析流程，不提供通用 shell 或任意命令接口。镜像构建、拉取和下载测试样本时需要联网。
 
 ## 包含的主要工具
 
@@ -48,7 +50,7 @@ REA 通过自身适配器驱动 Ghidra/JADX；只需向 OpenCode 注册一个主
 
 - Windows：已启动 Docker Desktop，使用 WSL2 / Linux containers。
 - Linux：可用的 Docker Engine 和 Docker Compose v2。
-- 宿主机 OpenCode。
+- 使用 Agent 深入分析时需要宿主机 OpenCode；Web 的固定分析流程不需要模型 API Key。
 - 首次构建需要访问 Ubuntu、Node.js、npm 和 GitHub 下载源。
 
 Compose 先按 8 GiB 内存上限、4 CPU、Ghidra 2 GiB JVM 堆配置。这是默认资源预算，不是实测最低要求。需要时从 .env 调整。
@@ -67,7 +69,7 @@ Set-Location faw_REA
 3. 检查 JADX 可用性，运行原生静态样本的真实 MCP 测试。
 4. 为当前目录创建或合并 opencode.json，备份旧配置。
 5. 从镜像导出匹配版本的完整 REA skill。
-6. 提示重新启动 OpenCode。
+6. 提供 Web 工作台地址，并提示重新启动 OpenCode。
 
 如果要把 MCP 和 skill 配置给另一个 OpenCode 项目：
 
@@ -97,7 +99,33 @@ Linux 脚本会导出 skill；若已有 OpenCode 配置，则保留原文件并�
 
 Linux 宿主机的 bind mount 目录必须允许容器 UID/GID 1000 读写。不要为解决这个问题把容器改成 privileged。
 
-## 开始分析
+## Web 工作台
+
+完成启动后，打开 http://127.0.0.1:8787。也可直接构建并启动，不配置 OpenCode：
+
+```bash
+docker compose up -d --build --wait
+```
+
+1. 点击“先试试演示样本”并开始分析，验证 Ghidra、REA 和证据导出整条链路。
+2. 拖入自己的 APK、EXE、SO 等样本，选择分析类型，填写关注关键词。单文件最大 512 MiB。
+3. 在“分析记录”查看进度、候选线索、静态调用结果与错误详情，下载包含摘要、结构化结果与 REA 证据的 ZIP。
+4. 需要深入代码时，复制追查提示词交给宿主机 OpenCode；“接入 OpenCode”页可复制完整配置。
+
+当前 Web 是固定工作流，没有内置大模型聊天。任务顺序执行，队列最多等待 8 个任务；服务重启时标记中断，不自动重跑。上传保存到 uploads/，结果保存到 results/web/，两者默认均不提交 Git，也不进入镜像构建上下文。手动放入 targets/ 的文件可由 OpenCode 读取，当前不会自动加入 Web 上传列表。
+
+### 检测范围
+
+- 原生程序：Ghidra 字符串关键词搜索，补充前 3 条命中的交叉引用；最多展示 150 条候选。
+- Android APK：JADX 包信息和 Manifest、Apktool 解码资源的关键词命中；不等于全量 DEX 代码审计。
+- JavaScript / ASAR：REA 的静态应用分析；.NET：静态元数据，需手动选择“.NET 元数据”。
+- 文件清单：REA 支持的静态资源清单，适用范围取决于上游解析器；不承诺解密、脱壳或还原所有格式。
+
+关键词默认 api_key、secret、token、password，可按目标修改。候选命中不等于真实凭据或已确认漏洞，未命中也不能证明没有泄露；加密、混淆、代码拼接和未遍历到的内容需要进一步静态分析。不会执行目标或验证凭据有效性。
+
+Web 绑定本地访问，带同源、Host 和 CSRF 检查；它没有多用户鉴权，不要把端口改成公网监听或当作多人 SaaS 服务。需要改端口时将 .env.example 复制为 .env，调整 REA_WEB_PORT。
+
+## 在 OpenCode 开始分析
 
 把样本放入 targets，例如 targets/demo.apk。在 OpenCode 中使用容器路径：
 
@@ -117,6 +145,7 @@ EXE/SO/ELF 同样放入 targets，使用 /targets/...。不要把 Windows 盘符
 
 ```powershell
 python tests/test_source.py
+python tests/test_web.py
 ```
 
 容器已启动后的原生分析验收：
@@ -136,7 +165,13 @@ docker exec rea-toolbox python3 /opt/toolbox/smoke-mcp.py --inside --apk /target
 
 公开 APK 从 Appium 下载，并按 REA 的固定 SHA-256 校验。只用于静态解析，不安装到设备。完整测试同时覆盖 JADX 的包/方法读取和 Apktool 资源解码。
 
-容器 healthcheck 仅检查工具和挂载目录，不代替真实分析验收。测试报告在 results，重启后仍保留。
+Web 上传、分析、查询和 ZIP 下载的真实端到端验收：
+
+```powershell
+docker exec rea-toolbox python3 /opt/toolbox/smoke-web.py --apk /targets/ApiDemos-debug.apk --report /results/smoke-web.json
+```
+
+容器 healthcheck 检查工具、挂载目录和 Web /health，不代替真实分析验收。单元测试使用替身 MCP 检查 HTTP 边界；smoke-mcp.py 与 smoke-web.py 使用真实 REA/Ghidra/JADX/Apktool。测试报告在 results，重启后仍保留。
 
 ## 手动接入 OpenCode
 
@@ -161,7 +196,7 @@ docker exec rea-toolbox python3 /opt/toolbox/smoke-mcp.py --inside --apk /target
 
 ## 发布镜像
 
-GitHub Actions 对 main、PR 和版本标签构建镜像，并运行原生 + APK 静态验收。
+GitHub Actions 对 main、PR 和版本标签构建镜像，并运行原生 + APK 的 MCP 和 Web 端到端静态验收。
 
 - 普通 push / PR：只构建和测试。
 - Actions 手动触发并选择 publish，或推送 vMAJOR.MINOR.PATCH 标签：测试通过后推送 GHCR。

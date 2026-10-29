@@ -17,7 +17,7 @@ function Run-Docker([string[]]$DockerArgs) {
 }
 Run-Docker -DockerArgs @("info", "--format", "{{.OSType}}")
 Run-Docker -DockerArgs @("compose", "version")
-foreach ($name in @("targets", "workspace", "results")) {
+foreach ($name in @("targets", "uploads", "workspace", "results")) {
     New-Item -ItemType Directory -Force -Path (Join-Path $repoRoot $name) | Out-Null
 }
 $compose = @("compose", "--project-directory", $repoRoot, "-f", (Join-Path $repoRoot "compose.yaml"))
@@ -36,4 +36,5 @@ if (-not $SkipSmoke) {
                  "--inside", "--report", "/results/smoke-mcp.json")
 }
 & (Join-Path $PSScriptRoot "configure-opencode.ps1") -ProjectPath $OpenCodeProject
-Write-Host "Static toolbox is ready. OpenCode uses /targets, /work and /results."
+Write-Host "Web workbench: http://127.0.0.1:8787 (see .env if the port is overridden)."
+Write-Host "OpenCode uses /uploads, /targets, /work and /results."

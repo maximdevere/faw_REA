@@ -26,6 +26,7 @@ jobs:
       - name: Check source configuration
         run: |
           python3 tests/test_source.py
+          python3 tests/test_web.py
           docker compose config --quiet
       - name: Build image
         # Package-lock generation on Windows is not a substitute for Linux execution.
@@ -48,12 +49,14 @@ jobs:
           docker exec rea-toolbox rea doctor --provider jadx --json
           docker exec rea-toolbox python3 /opt/toolbox/smoke-mcp.py --inside \
             --apk /targets/ApiDemos-debug.apk --report /results/smoke-mcp.json
+          docker exec rea-toolbox python3 /opt/toolbox/smoke-web.py \
+            --apk /targets/ApiDemos-debug.apk --report /results/smoke-web.json
       - name: Save test report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: static-analysis-test-report
-          path: results/smoke-mcp.json
+          path: results/smoke-*.json
           if-no-files-found: warn
       - name: Login for an explicitly requested release
         if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish)

@@ -70,7 +70,8 @@ class SourceTests(unittest.TestCase):
 
     def test_compose_scope(self):
         text=(ROOT/"compose.yaml").read_text()
-        self.assertIn("network_mode: none",text)
+        self.assertIn("127.0.0.1:",text)
+        self.assertIn("REA_WEB_PORT",text)
         self.assertIn("read_only: true",text)
         self.assertNotIn("docker.sock",text)
         self.assertNotIn("privileged:",text)

@@ -2,6 +2,8 @@
 config/rea.env
 config/ida-mcp.json
 vendor/
+uploads/*
+!uploads/.gitkeep
 targets/*
 !targets/.gitkeep
 workspace/*

@@ -8,7 +8,7 @@ if ! command -v docker >/dev/null; then
 fi
 docker info --format '{{.OSType}}'
 docker compose version
-mkdir -p "$repo_root/targets" "$repo_root/workspace" "$repo_root/results"
+mkdir -p "$repo_root/targets" "$repo_root/uploads" "$repo_root/workspace" "$repo_root/results"
 compose=(docker compose --project-directory "$repo_root" -f "$repo_root/compose.yaml")
 "${compose[@]}" config --quiet
 if [ "$mode" = pull ]; then
@@ -37,4 +37,5 @@ if [ ! -e "$repo_root/opencode.json" ] && [ ! -e "$repo_root/opencode.jsonc" ]; 
 else
   printf '%s\n' "Existing OpenCode config preserved. Merge config/opencode.example.json into it."
 fi
-printf '%s\n' "Restart OpenCode in $repo_root. Use /targets/... for REA input paths."
+printf '%s\n' "Web workbench: http://127.0.0.1:8787 (see .env for port overrides)."
+printf '%s\n' "Restart OpenCode in $repo_root. Use /uploads/... or /targets/... for REA."

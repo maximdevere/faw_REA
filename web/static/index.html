@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><title>FAW REA · 静态分析工作台</title>
+<link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body>
+<aside class="sidebar">
+  <a class="brand" href="/" aria-label="FAW REA 首页"><span class="brand-mark">R<span>↗</span></span><span>FAW REA<small>REVERSE, WITH CLARITY.</small></span></a>
+  <div class="workspace-label">你的分析空间</div>
+  <nav aria-label="主要导航">
+    <button class="nav-item active" data-view="home"><span>◫</span>工作台</button>
+    <button class="nav-item" data-view="history"><span>▤</span>分析记录<span class="nav-count" id="nav-count">0</span></button>
+    <button class="nav-item" data-view="connect"><span>⌘</span>接入 OpenCode</button>
+  </nav>
+  <div class="side-bottom"><div class="local-status"><i></i>本地工作空间</div><p>文件留在你的环境中<br>分析交给 REA</p><div class="side-version">STATIC EDITION <span>v0.1</span></div></div>
+</aside>
+<div class="app-shell">
+<header class="topbar"><div><span class="breadcrumb">工作空间</span><span class="slash">/</span><strong id="page-title">工作台</strong></div><div class="top-actions"><span class="engine-pill" id="engine-status"><i></i>连接中</span><button class="icon-button" id="refresh" aria-label="刷新状态">↻</button><span class="avatar">FA</span></div></header>
+<main>
+<section id="view-home" class="view active">
+  <div class="hero"><div class="eyebrow"><span class="tiny-square"></span> 从文件开始，保持好奇</div><h1>复杂的程序，<span>清晰的线索。</span></h1><p>上传一个样本，让 REA 帮你整理代码、字符串与资源。<br class="mobile-hide">轻松开始静态分析，把深入判断留给你和 OpenCode。</p></div>
+  <div class="stats"><div class="stat"><div class="stat-icon blue">▧</div><div><p>本地样本</p><strong id="stat-files">—</strong></div></div><div class="stat"><div class="stat-icon green">✓</div><div><p>已完成分析</p><strong id="stat-done">—</strong></div></div><div class="stat"><div class="stat-icon amber">⌕</div><div><p>待核实线索</p><strong id="stat-findings">—</strong></div><span class="stat-note">候选 ≠ 漏洞</span></div></div>
+  <div class="work-grid">
+    <section class="card new-analysis"><div class="section-heading"><div><h2>开始一次新分析</h2><p>原生程序、Android 应用与静态文件</p></div><span class="badge">纯静态</span></div>
+      <div class="dropzone" id="dropzone"><div class="upload-illustration"><span class="file-sheet">↥</span><span class="mini-spark">✦</span></div><h3 id="drop-title">把文件拖到这里</h3><p id="drop-subtitle">支持 APK、EXE、DLL、SO、ELF、ASAR 等</p><button class="button button-outline" id="choose-file">选择本地文件 <span>↗</span></button><small>单文件最大 512 MiB · 不执行或安装目标</small><input id="file-input" type="file" hidden><div class="upload-progress" id="upload-progress" hidden><i></i></div></div>
+      <div id="selected-file" class="selected-file" hidden><span class="file-type">FILE</span><div><strong id="file-name"></strong><small id="file-meta"></small></div><button class="icon-button" id="clear-file" aria-label="清除选择">×</button></div>
+      <div class="form-grid"><label>分析类型<select id="profile"><option value="auto">自动识别 · 推荐</option><option value="native">原生程序 · Ghidra</option><option value="android">Android APK · JADX</option><option value="javascript">JavaScript / ASAR</option><option value="managed">.NET 元数据</option><option value="artifact">文件与资源清单</option></select></label><label>关注关键词 <span class="optional">可选</span><input id="keywords" value="api_key, secret, token, password" placeholder="多个关键词用逗号分隔"></label></div>
+      <div class="analysis-actions"><button class="text-button" id="demo">先试试演示样本 <span>↗</span></button><button class="button button-primary" id="start-analysis" disabled>开始静态分析 <span>→</span></button></div>
+    </section>
+    <aside class="right-rail"><section class="card tools-card"><div class="section-heading"><h2>你的工具箱</h2><span class="online-dot"></span></div><div id="tools-list" class="tools-list"><div class="loading-text">正在读取环境…</div></div><div class="toolbox-note"><span>◈</span>统一通过 REA MCP 调用</div></section><section class="connect-card"><div class="connect-symbol">⌘</div><h3>让 OpenCode 接着分析</h3><p>在这里找到线索，再让你的 Agent 沿着代码和引用继续追查。</p><button class="text-button light" data-open-connect>查看接入配置 <span>→</span></button></section></aside>
+  </div>
+  <section class="card recent-card"><div class="section-heading"><h2>最近的分析</h2><button class="text-button" data-open-history>查看全部 →</button></div><div id="recent-jobs" class="job-list"></div></section>
+</section>
+<section id="view-history" class="view"><div class="view-heading"><div class="eyebrow">ANALYSIS LIBRARY</div><h1>每一条线索，都有来处。</h1><p>查看任务进度、筛选候选信息，导出可以继续追查的证据。</p></div><div class="history-layout"><section class="card history-list"><div class="section-heading"><h2>分析记录</h2><span id="history-total" class="badge">0 个任务</span></div><div id="history-jobs" class="job-list"></div></section><section class="card job-detail" id="job-detail"><div class="empty-state"><span>⌕</span><h3>选择一次分析</h3><p>结果、进度和证据会在这里展开。</p></div></section></div></section>
+<section id="view-connect" class="view"><div class="view-heading"><div class="eyebrow">YOUR AGENT, YOUR WORKFLOW</div><h1>把工具交给 OpenCode。</h1><p>模型和账号留在宿主机，静态分析工具由 Docker 提供。</p></div><div class="card connect-panel"><div class="section-heading"><div><h2>OpenCode MCP 配置</h2><p>合并到你的 opencode.json，不要覆盖其它配置。</p></div><button class="button button-primary" id="copy-config">复制配置 ⧉</button></div><pre class="code-block" id="config-code"></pre><div class="setup-steps"><div><b>01</b><strong>保持容器运行</strong><p>当前工具箱为 rea-toolbox。</p></div><div><b>02</b><strong>复制配置与工作流</strong><p>运行 scripts/configure-opencode.ps1，或手动合并配置并导出 skill。</p></div><div><b>03</b><strong>重新启动 OpenCode</strong><p>使用 /uploads、/targets、/work 和 /results 这些容器路径。</p></div></div></div><div class="info-strip">✦ 每次分析都能复制追查提示词；Web 任务和 OpenCode 的 MCP 会话相互独立，证据文件可以共享。</div></section>
+<footer><span><i></i>STATIC ANALYSIS WORKBENCH</span><span class="footer-right"><span>由 REA 提供分析能力 · 在你的环境中运行</span><span class="signature">dyushine</span></span></footer>
+</main></div><div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body></html>

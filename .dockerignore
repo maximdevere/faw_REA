@@ -3,6 +3,7 @@
 config/rea.env
 config/ida-mcp.json
 vendor
+uploads
 targets
 workspace
 results
