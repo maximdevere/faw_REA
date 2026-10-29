@@ -4,6 +4,18 @@
 
 本项目覆盖本地 APK、EXE、DLL、ELF、SO 以及 REA 内置支持的静态文件分析；不运行目标，不配置动态调试、Frida、设备连接或目标浏览器自动化。
 
+## 新用户：从零接入自己的 OpenCode
+
+克隆后运行 `.\setup.ps1`。向导会检查 Docker、按需安装 OpenCode，让使用者选择自己的模型账号、登录服务或填写兼容 API，然后部署并验证 REA。无需开发者的账号或模型配置。详细步骤见 [首次使用指南](docs/first-run.md)。
+
+```powershell
+git clone https://github.com/maximdevere/faw_REA.git
+cd faw_REA
+.\setup.ps1
+```
+
+已有环境可继续使用下方的低层脚本；它们只配置工具连接。首次引导负责模型选择，自定义 API 的 Key 保存在 OpenCode 用户数据目录，项目只保存文件引用。任何用户都需要自己可用的模型账号；镜像不附带共享额度。
+
 ## 架构
 
 ```text

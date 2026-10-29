@@ -33,7 +33,9 @@ jobs:
         run: docker build --tag faw-rea:ci --build-arg VCS_REF="$GITHUB_SHA" .
       - name: Test OpenCode configuration preservation
         shell: pwsh
-        run: ./tests/test-configure-opencode.ps1
+        run: |
+          ./tests/test-configure-opencode.ps1
+          ./tests/test-first-run.ps1
       - name: Download and verify public APK fixture
         run: python3 scripts/fetch-artifacts.py --manifest versions.lock.json --output targets --only apidemos
       - name: Test real MCP and static analysis
