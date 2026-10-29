@@ -328,6 +328,20 @@ class Handler(BaseHTTPRequestHandler):
         value=json.loads(self.rfile.read(length) or b"{}")
         if not isinstance(value,dict): raise ValueError("请求必须为 JSON 对象")
         return value
+    def discard_small_rejected_body(self):
+        # Avoid a connection reset hiding the HTTP rejection on small requests.
+        # Never drain an untrusted large upload just to reject its credentials.
+        try: length=int(self.headers.get("Content-Length","0"))
+        except ValueError: return
+        if 0<length<=65536:
+            timeout=self.connection.gettimeout()
+            try:
+                self.connection.settimeout(1)
+                self.rfile.read(length)
+            except OSError:
+                pass
+            finally:
+                self.connection.settimeout(timeout)
     def do_GET(self):
         try:
             self.check_host()
@@ -368,7 +382,11 @@ class Handler(BaseHTTPRequestHandler):
         except (OSError,ValueError) as error: self.send({"error":str(error)},400)
     def do_POST(self):
         try:
-            self.check_write()
+            try:
+                self.check_write()
+            except PermissionError as error:
+                self.discard_small_rejected_body()
+                return self.send({"error":str(error)},403)
             route=urlsplit(self.path).path
             if route=="/api/uploads":
                 length=int(self.headers.get("Content-Length","0"))

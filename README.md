@@ -48,7 +48,7 @@ REA 通过自身适配器驱动 Ghidra/JADX；只需向 OpenCode 注册一个主
 
 ## 前置条件
 
-- Windows：已启动 Docker Desktop，使用 WSL2 / Linux containers。
+- Windows：已启动 Docker Desktop（Linux containers），或在 WSL2 发行版中运行 Docker Engine + Compose v2。
 - Linux：可用的 Docker Engine 和 Docker Compose v2。
 - 使用 Agent 深入分析时需要宿主机 OpenCode；Web 的固定分析流程不需要模型 API Key。
 - 首次构建需要访问 Ubuntu、Node.js、npm 和 GitHub 下载源。
@@ -60,16 +60,18 @@ Compose 先按 8 GiB 内存上限、4 CPU、Ghidra 2 GiB JVM 堆配置。这是�
 ```powershell
 git clone https://github.com/maximdevere/faw_REA.git
 Set-Location faw_REA
-.\scripts\bootstrap.ps1
+.\scripts\bootstrap.ps1 -VerifyOpenCode
 ```
 
 脚本会：
-1. 检查 Docker 和 Compose。
+1. 自动选择可用的 Docker Desktop / 原生 Docker；不可用时尝试默认 WSL 发行版，或使用显式指定的发行版。
 2. 构建并启动容器。
 3. 检查 JADX 可用性，运行原生静态样本的真实 MCP 测试。
 4. 为当前目录创建或合并 opencode.json，备份旧配置。
 5. 从镜像导出匹配版本的完整 REA skill。
-6. 提供 Web 工作台地址，并提示重新启动 OpenCode。
+6. 使用 -VerifyOpenCode 时，调用真实的 opencode mcp list，确认 rea connected，然后提供 Web 地址和下一步提示。
+
+连接校验不会发送大模型请求。脚本保留现有 model、small_model、provider、disabled_providers、权限及其他 MCP 设置，不会选择模型、写入 API Key 或启用已禁用的模型渠道。账号和模型仍在 OpenCode 中单独配置。只使用 Web 时可以省略 -VerifyOpenCode。
 
 如果要把 MCP 和 skill 配置给另一个 OpenCode 项目：
 
@@ -77,13 +79,39 @@ Set-Location faw_REA
 .\scripts\bootstrap.ps1 -OpenCodeProject "D:\projects\analysis"
 ```
 
-如果项目使用 opencode.jsonc，脚本会保留该文件并要求手动合并 config/opencode.example.json，避免破坏注释和其他设置。
+### 只接入 OpenCode
+
+容器已运行时，只需：
+
+```powershell
+.\scripts\configure-opencode.ps1 -Verify
+```
+
+脚本自动生成正确的 stdio MCP 命令、合并项目配置、备份旧配置和 skill，并从当前镜像导出匹配版本的完整 REA skill。可重复运行；配置备份位于项目 .opencode/rea-backups/。要配置另一个已有项目，追加 -ProjectPath "D:\projects\analysis"。
+
+如果项目使用 opencode.jsonc，脚本会保留该文件并要求手动合并 config/opencode.example.json，避免破坏注释。全局 OpenCode 的 JSON / JSONC 模型配置不会被修改。
+
+### Windows 使用 WSL Docker
+
+可显式指定发行版，Ubuntu 请替换为自己的名称（例如 kali-linux）：
+
+```powershell
+.\scripts\bootstrap.ps1 -WslDistro Ubuntu -VerifyOpenCode
+# 已启动容器时，仅补接入配置
+.\scripts\configure-opencode.ps1 -WslDistro Ubuntu -Verify
+```
+
+脚本会将 Docker Compose 和 skill 导出路径转换为 Linux 路径，并为 Windows OpenCode 生成 wsl.exe → docker exec 的命令。先尝试当前 WSL 用户访问 Docker；只有已允许 sudo -n 时才使用它，不会修改用户组或 sudo 权限。需要强制使用 Windows Docker CLI 时指定 -DockerBackend Native。
+
+WSL 方式请保持该发行版和 Docker 服务运行；脚本不安装或修改系统服务，也不创建后台常驻进程。其他电脑仍需先安装并启动 Docker，安装 OpenCode CLI，完成自己的模型账号配置。
 
 已有镜像且不想重新构建时，先在 .env 中设置 REA_IMAGE，再运行：
 
 ```powershell
-.\scripts\bootstrap.ps1 -Pull
+.\scripts\bootstrap.ps1 -Pull -VerifyOpenCode
 ```
+
+复用本地已有镜像时使用 -UseLocalImage；它与 -Pull 二选一。
 
 GHCR 镜像只有在维护者发布后才存在，不要把示例地址当作已经发布。
 
