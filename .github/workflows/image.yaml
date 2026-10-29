@@ -1,0 +1,83 @@
+name: Build and verify static toolbox
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the verified image to GHCR
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check source configuration
+        run: |
+          python3 tests/test_source.py
+          docker compose config --quiet
+      - name: Build image
+        # Package-lock generation on Windows is not a substitute for Linux execution.
+        run: docker build --tag faw-rea:ci --build-arg VCS_REF="$GITHUB_SHA" .
+      - name: Test OpenCode configuration preservation
+        shell: pwsh
+        run: ./tests/test-configure-opencode.ps1
+      - name: Download and verify public APK fixture
+        run: python3 scripts/fetch-artifacts.py --manifest versions.lock.json --output targets --only apidemos
+      - name: Test real MCP and static analysis
+        run: |
+          mkdir -p workspace results
+          sudo chown 1000:1000 workspace results
+          docker run -d --name rea-toolbox --init --network none --cap-drop ALL \
+            --security-opt no-new-privileges:true \
+            --mount type=bind,src="$PWD/targets",dst=/targets,readonly \
+            --mount type=bind,src="$PWD/workspace",dst=/work \
+            --mount type=bind,src="$PWD/results",dst=/results \
+            faw-rea:ci
+          docker exec rea-toolbox rea doctor --provider jadx --json
+          docker exec rea-toolbox python3 /opt/toolbox/smoke-mcp.py --inside \
+            --apk /targets/ApiDemos-debug.apk --report /results/smoke-mcp.json
+      - name: Save test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-analysis-test-report
+          path: results/smoke-mcp.json
+          if-no-files-found: warn
+      - name: Login for an explicitly requested release
+        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish only after tests passed
+        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish)
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          tag="sha-${GITHUB_SHA:0:12}"
+          docker tag faw-rea:ci "$image:$tag"
+          docker push "$image:$tag"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="${GITHUB_REF#refs/tags/v}"
+            if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Expected a vMAJOR.MINOR.PATCH tag" >&2
+              exit 1
+            fi
+            docker tag faw-rea:ci "$image:$version"
+            docker push "$image:$version"
+          fi
+      - name: Cleanup test container
+        if: always()
+        run: docker rm -f rea-toolbox || true

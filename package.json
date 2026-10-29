@@ -1,0 +1,10 @@
+{
+  "name": "faw-rea-toolbox-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pinned REA runtime for the static-analysis container",
+  "dependencies": {
+    "rea-agents": "6.8.0",
+    "@lydell/node-pty-linux-x64": "1.1.0"
+  }
+}

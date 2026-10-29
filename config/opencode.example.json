@@ -1,0 +1,39 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "rea": {
+      "type": "local",
+      "command": [
+        "docker",
+        "exec",
+        "-i",
+        "-w",
+        "/work",
+        "rea-toolbox",
+        "rea",
+        "mcp"
+      ],
+      "enabled": true,
+      "timeout": 1800000
+    }
+  },
+  "tools": {
+    "rea_*frida*": false,
+    "rea_*gdb*": false,
+    "rea_*rizin*": false,
+    "rea_*cutter*": false,
+    "rea_*adb*": false,
+    "rea_observe_*": false,
+    "rea_capture_*": false,
+    "rea_list_browser_targets": false,
+    "rea_inspect_web_page": false,
+    "rea_discover_webmcp_tools": false,
+    "rea_list_electron_targets": false,
+    "rea_inspect_electron_page": false,
+    "rea_list_javascript_runtime_targets": false,
+    "rea_reconcile_javascript_runtime": false,
+    "rea_export_web_scripts": false,
+    "rea_inspect_web_event_listeners": false,
+    "rea_verify_reconstruction": false
+  }
+}

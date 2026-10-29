@@ -1,0 +1,16 @@
+.git
+.env
+config/rea.env
+config/ida-mcp.json
+vendor
+targets
+workspace
+results
+node_modules
+__pycache__
+**/__pycache__
+.opencode
+opencode.json
+opencode.jsonc
+*.tar
+*.tar.gz

@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "project": "faw_REA",
+  "image_version": "0.1.0",
+  "platform": "linux/amd64",
+  "scope": "static-analysis",
+  "base_image": "ubuntu:24.04@sha256:fe81560990fae86dc4743202b2cb4d3df98d0bcf949173cecef15ce1127ef852",
+  "reviewed_on": "2026-10-29",
+  "artifacts": [
+    {
+      "id": "node",
+      "version": "24.22.1",
+      "filename": "node-v24.22.1-linux-x64.tar.xz",
+      "url": "https://nodejs.org/dist/v24.22.1/node-v24.22.1-linux-x64.tar.xz",
+      "sha256": "6c172a9ab6718f7b801fb5a7bd486af2ee5e32758086a04b84fcce2aa77095e6"
+    },
+    {
+      "id": "ghidra",
+      "version": "12.1.4",
+      "filename": "ghidra_12.1.4_PUBLIC_20260921.zip",
+      "url": "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.1.4_build/ghidra_12.1.4_PUBLIC_20260921.zip",
+      "sha256": "ddac49f903da9d5bac833e5cc79395098b9c33cfd3279be5f31bd00387d2d4db"
+    },
+    {
+      "id": "jadx",
+      "version": "0.7.1",
+      "filename": "jadx-headless-mcp-0.7.1-all.jar",
+      "url": "https://github.com/1013503897/jadx-headless-mcp/releases/download/v0.7.1/jadx-headless-mcp-0.7.1-all.jar",
+      "sha256": "6e5eacf500b64292bfb73c49797c1958f6ee44646e43e868039ae7feb573ff75"
+    },
+    {
+      "id": "apktool",
+      "version": "3.0.3",
+      "filename": "apktool_3.0.3.jar",
+      "url": "https://github.com/iBotPeaches/Apktool/releases/download/v3.0.3/apktool_3.0.3.jar",
+      "sha256": "dbf930b076c6b9be08d57c449cacefc3bdd6b71ebd59b3066fc0e1f5b14f9423"
+    }
+  ],
+  "npm": {
+    "rea": "6.8.0",
+    "rea_integrity": "sha512-9QDeRnGqEDzABZyr04eLnBXBv/c6I9/TWu/6M0MD4pEfkySI/BIgwTODIbAReX3C1x6hjw9+Jlx4A2yUSPZ9ww==",
+    "lockfile": "package-lock.json",
+    "omit_optional": true,
+    "explicit_linux_pty": "1.1.0"
+  },
+  "os_packages": "apt security updates resolved at build; exact installed package inventory recorded in image",
+  "fixtures": [
+    {
+      "id": "apidemos",
+      "name": "Appium ApiDemos",
+      "version": "6.0.18",
+      "filename": "ApiDemos-debug.apk",
+      "url": "https://github.com/appium/android-apidemos/releases/download/v6.0.18/ApiDemos-debug.apk",
+      "sha256": "a9eecf37b26cd084855c530db81c2bb1b91f4c1b095a04f47aa7c20e2791f686",
+      "license": "Apache-2.0",
+      "source": "https://github.com/appium/android-apidemos"
+    }
+  ]
+}

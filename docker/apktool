@@ -1,0 +1,3 @@
+#!/bin/sh
+set -eu
+exec "${JAVA_HOME}/bin/java" -jar /opt/apktool/apktool_3.0.3.jar "$@"

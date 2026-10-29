@@ -1,0 +1,46 @@
+name: faw-rea
+services:
+  toolbox:
+    image: ${REA_IMAGE:-faw-rea:0.1.0}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    container_name: rea-toolbox
+    init: true
+    restart: unless-stopped
+    user: "1000:1000"
+    working_dir: /work
+    command: ["sleep", "infinity"]
+    network_mode: none
+    shm_size: 1gb
+    mem_limit: ${REA_MEMORY_LIMIT:-8g}
+    cpus: "${REA_CPUS:-4.0}"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      GHIDRA_HEADLESS_MAXMEM: ${GHIDRA_HEADLESS_MAXMEM:-2G}
+      REA_GHIDRA_STARTUP_TIMEOUT_MS: "900000"
+      REA_MCP_INPUT_SCHEMA_PROFILE: compact
+    volumes:
+      - type: bind
+        source: ./targets
+        target: /targets
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./workspace
+        target: /work
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./results
+        target: /results
+        bind:
+          create_host_path: false
+      - rea-home:/home/rea
+volumes:
+  rea-home:
